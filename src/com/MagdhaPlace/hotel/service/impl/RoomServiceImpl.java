@@ -1,5 +1,6 @@
 package com.MagdhaPlace.hotel.service.impl;
 
+import com.MagdhaPlace.hotel.exceptions.RoomNotFoundException;
 import com.MagdhaPlace.hotel.model.RoomModel;
 import com.MagdhaPlace.hotel.repo.RoomRepo;
 import com.MagdhaPlace.hotel.service.RoomService;
@@ -47,5 +48,16 @@ public class RoomServiceImpl implements RoomService {
             log.severe("IOException occurred, "+e.getMessage());
         }
         return null;
+    }
+
+    @Override
+    public void updateRoom(RoomModel r) {
+        try {
+            roomRepo.update(r);
+        } catch (IOException e) {
+            log.severe("IOException Occurred, "+e.getMessage());
+        } catch (RoomNotFoundException e) {
+            log.severe("RoomNotFoundException occurred, "+e.getMessage());
+        }
     }
 }

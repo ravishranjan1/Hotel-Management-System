@@ -9,4 +9,5 @@ public interface RoomService {
     void addRoom(RoomModel r);
     List<RoomModel>searchAvailable(LocalDate from, LocalDate to);
     RoomModel findById(String id);
+    void updateRoom(RoomModel r);
 }

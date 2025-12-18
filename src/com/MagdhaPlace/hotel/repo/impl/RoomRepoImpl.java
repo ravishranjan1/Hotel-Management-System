@@ -1,5 +1,6 @@
 package com.MagdhaPlace.hotel.repo.impl;
 
+import com.MagdhaPlace.hotel.exceptions.RoomNotFoundException;
 import com.MagdhaPlace.hotel.model.RoomModel;
 import com.MagdhaPlace.hotel.model.RoomStatus;
 import com.MagdhaPlace.hotel.repo.RoomRepo;
@@ -28,6 +29,30 @@ public class RoomRepoImpl implements RoomRepo {
         list.add(r);
         writeAll(list);
     }
+
+    public void update(RoomModel r)throws IOException, RoomNotFoundException {
+        boolean isFound = false;
+        List<RoomModel> list = findAll();
+        for(int i=0; i<list.size(); i++){
+            RoomModel x = (RoomModel) list.get(i);
+            if(x.getId().equalsIgnoreCase(r.getId())){
+                isFound = true;
+                x.setType(r.getType());
+                x.setBeds(r.getBeds());
+                x.setNightlyRate(r.getNightlyRate());
+                x.setAmenities(r.getAmenities());
+                x.setStatus(r.getStatus());
+                list.set(i,x);
+                break;
+            }
+        }
+        if(!isFound){
+            throw new RoomNotFoundException("Room With this id"+r.getId()+" is not present");
+        }
+
+        writeAll(list);
+    }
+
 
     private void writeAll(List<RoomModel> list) throws IOException {
         BufferedWriter bw = Files.newBufferedWriter(csvpath);
