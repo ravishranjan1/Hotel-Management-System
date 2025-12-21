@@ -1,5 +1,7 @@
 package com.MagdhaPlace.hotel.repo.impl;
 
+import com.MagdhaPlace.hotel.exceptions.BookingNotFoundException;
+import com.MagdhaPlace.hotel.exceptions.RoomNotFoundException;
 import com.MagdhaPlace.hotel.model.BookingModel;
 import com.MagdhaPlace.hotel.model.BookingStatus;
 import com.MagdhaPlace.hotel.repo.BookingRepo;
@@ -62,6 +64,26 @@ public class BookingRepoImpl implements BookingRepo {
         }
         br.close();
         return list;
+    }
+
+    @Override
+    public void updateBooking(BookingModel b) throws IOException {
+        List<BookingModel> list = findAll();
+        for(int i=0; i<list.size();i++){
+            BookingModel x = (BookingModel) list.get(i);
+            if(x.getId().equalsIgnoreCase(b.getId())){
+                x.setRoomId(b.getRoomId());
+                x.setCustomerId(b.getCustomerId());
+                x.setStatus(b.getStatus());
+                x.setTotalAmount(b.getTotalAmount());
+                x.setPrepaidAmount(b.getPrepaidAmount());
+                x.setCheckInDate(b.getCheckInDate());
+                x.setCheckOutDate(b.getCheckOutDate());
+                list.set(i,x);
+                break;
+            }
+        }
+        writeAll(list);
     }
 
     private BookingModel parseIntoBooking(String line){
