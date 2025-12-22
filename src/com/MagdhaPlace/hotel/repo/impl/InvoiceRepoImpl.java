@@ -13,6 +13,7 @@ import java.util.List;
 
 public class InvoiceRepoImpl implements InvoiceRepo {
     private final Path csvpath;
+    private final String HEADER = "id,bookingId,roomCharge,tax,additionalCharge,totalDue";
 
     public InvoiceRepoImpl(Path csvpath) {
         this.csvpath = csvpath;
@@ -27,6 +28,8 @@ public class InvoiceRepoImpl implements InvoiceRepo {
 
     private void writeAll(List<InvoiceModel> list) throws IOException {
         BufferedWriter bw = Files.newBufferedWriter(csvpath);
+        bw.write(HEADER);
+        bw.newLine();
         String line;
         for(InvoiceModel i : list){
             line = i.getId()+","+
@@ -47,7 +50,7 @@ public class InvoiceRepoImpl implements InvoiceRepo {
         List<InvoiceModel> list = new ArrayList<>();
         BufferedReader br = Files.newBufferedReader(csvpath);
         String line = br.readLine();
-        while(line != null){
+        while((line = br.readLine()) != null){
             if(!line.trim().isEmpty()){
                 InvoiceModel i = parseIntoInvoice(line);
                 list.add(i);
@@ -58,7 +61,7 @@ public class InvoiceRepoImpl implements InvoiceRepo {
     }
 
     private InvoiceModel parseIntoInvoice(String line){
-        String[] word = line.split(",",-1);
+        String[] word = line.split(",");
         InvoiceModel i = new InvoiceModel();
         i.setId(word[0]);
         i.setBookingId(word[1]);

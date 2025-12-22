@@ -18,8 +18,18 @@ public class InvoiceServiceImpl implements InvoiceService {
     }
 
     @Override
-    public void generateInvoice(InvoiceModel i) {
+    public void generateInvoice(String bookingId, double totalCharge, double prePaid) {
         try {
+            InvoiceModel i = new InvoiceModel();
+            String id = String.valueOf(UUID.randomUUID());
+            i.setId(id);
+            i.setBookingId(bookingId);
+            i.setRoomCharges(totalCharge);
+            double tax = totalCharge*0.18;
+            i.setTaxes(tax);
+            double due = (totalCharge+tax)-prePaid;
+            i.setTotalDue(due);
+            i.setAdditionalCharges(0.0);
             invoiceRepo.gererateInvoice(i);
         } catch (IOException e) {
             log.severe("IOException occurred, "+e.getMessage());

@@ -1,6 +1,7 @@
 package com.MagdhaPlace.hotel.service.impl;
 
 import com.MagdhaPlace.hotel.exceptions.BookingNotFoundException;
+import com.MagdhaPlace.hotel.exceptions.HotelException;
 import com.MagdhaPlace.hotel.exceptions.RoomNotAvailableException;
 import com.MagdhaPlace.hotel.model.*;
 import com.MagdhaPlace.hotel.repo.BookingRepo;
@@ -12,6 +13,7 @@ import com.MagdhaPlace.hotel.util.IdGenerator;
 
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.logging.Logger;
@@ -61,32 +63,42 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
-    public BookingModel checkIn(String bookingId) throws BookingNotFoundException {
+    public BookingModel checkIn(String bookingId) throws BookingNotFoundException, HotelException {
         BookingModel booking = findByBookingId(bookingId);
         if(booking == null){
             throw new BookingNotFoundException("Booking with this Id : "+bookingId+" is not found");
+        }
+        if (booking.getStatus() != BookingStatus.RESERVED) {
+            throw new HotelException("Check-in not allowed. Booking status is " + booking.getStatus() + ". Only RESERVED bookings can be checked in.");
         }
         booking.setStatus(BookingStatus.CHECKED_IN);
         try {
             bookingRepo.updateBooking(booking);
+            return booking;
         } catch (IOException e) {
             log.severe("IOException occurred, "+e.getMessage());
         }
-        return booking;
+        return null;
     }
 
     @Override
-    public InvoiceModel checkOut(String bookingId, LocalDate actualCheckOutDate) throws BookingNotFoundException {
+    public InvoiceModel checkOut(String bookingId, LocalDate actualCheckOutDate) throws BookingNotFoundException, HotelException {
         BookingModel booking = findByBookingId(bookingId);
         if(booking == null){
             throw new BookingNotFoundException("Booking with this Id : "+bookingId+" is not found");
+        }
+        if (booking.getStatus() != BookingStatus.CHECKED_IN) {
+            throw new HotelException("Checkout not allowed. Booking status is " + booking.getStatus() + ". Only CHECKED_IN bookings can be checked out.");
         }
 
         RoomModel room = roomService.findById(booking.getRoomId());
         double nightRate = room.getNightlyRate();
 
         int nights = DateUtil.nightsRented(booking.getCheckInDate(), booking.getCheckOutDate());
-        int lateNights = DateUtil.nightsRented(booking.getCheckOutDate(), actualCheckOutDate);
+        int lateNights = 0;
+        if (actualCheckOutDate.isAfter(booking.getCheckOutDate())) {
+            lateNights = DateUtil.nightsRented(booking.getCheckOutDate(), actualCheckOutDate);
+        }
         double charge = nights*nightRate;
         double lateCharge = lateNights*(nightRate*1.2);
 
@@ -104,31 +116,45 @@ public class BookingServiceImpl implements BookingService {
         } catch (IOException e) {
             log.severe("IOException occurred, "+e.getMessage());
         }
-
-        InvoiceModel invoice = new InvoiceModel();
-        String id = String.valueOf(UUID.randomUUID());
-        invoice.setId(id);
-        invoice.setBookingId(bookingId);
-        invoice.setRoomCharges(totalCharge);
-        double tax = totalCharge*0.18;
-        invoice.setTaxes(tax);
-        double due = (totalCharge+tax)-booking.getPrepaidAmount();
-        invoice.setTotalDue(due);
-
-        invoiceService.generateInvoice(invoice);
-        InvoiceModel i = invoiceService.findByBookingId(bookingId);
-        return i;
+        invoiceService.generateInvoice(bookingId, totalCharge, booking.getPrepaidAmount());
+        return invoiceService.findByBookingId(bookingId);
 
     }
 
     @Override
-    public boolean cancelBooking(String bookingId) {
+    public boolean cancelBooking(String bookingId) throws BookingNotFoundException, HotelException {
+        BookingModel booking = findByBookingId(bookingId);
+        if(booking == null){
+            throw new BookingNotFoundException("Booking with this Id : "+bookingId+" is not found");
+        }
+        if (booking.getStatus() != BookingStatus.RESERVED) {
+            throw new HotelException("Cancellation not allowed. Booking status is " + booking.getStatus() + ". Only RESERVED bookings can be cancelled.");
+        }
+        booking.setStatus(BookingStatus.CANCELLED);
+        try {
+            bookingRepo.updateBooking(booking);
+            return true;
+        } catch (IOException e) {
+            log.severe("IOException occurred, "+e.getMessage());
+        }
+
         return false;
     }
 
     @Override
     public List<BookingModel> listBookingForCustomer(String customerId) {
-        return List.of();
+        List<BookingModel> res = new ArrayList<>();
+        try {
+            List<BookingModel> list = bookingRepo.findAll();
+            for(BookingModel b : list){
+                if(b.getCustomerId().equalsIgnoreCase(customerId)){
+                    res.add(b);
+                }
+            }
+        } catch (IOException e) {
+            log.severe("IOException occurred,"+e.getMessage());
+        }
+        return  res;
     }
 
     public BookingModel findByBookingId(String bookingId){
