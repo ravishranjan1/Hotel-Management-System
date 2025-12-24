@@ -87,9 +87,16 @@ public class BookingServiceImpl implements BookingService {
         if(booking == null){
             throw new BookingNotFoundException("Booking with this Id : "+bookingId+" is not found");
         }
+
         if (booking.getStatus() != BookingStatus.CHECKED_IN) {
             throw new HotelException("Checkout not allowed. Booking status is " + booking.getStatus() + ". Only CHECKED_IN bookings can be checked out.");
         }
+
+        if (actualCheckOutDate.isBefore(booking.getCheckInDate())) {
+            throw new HotelException(
+                    "Invalid checkout date. Checkout date cannot be before check-in date.");
+        }
+
 
         RoomModel room = roomService.findById(booking.getRoomId());
         double nightRate = room.getNightlyRate();

@@ -37,9 +37,7 @@ public class AppRunner {
                     case "cancel"  -> handleBooking.handleCancel(sc);
                     case "list-booking"  -> handleBooking.handleListOfCustomer(sc);
                     case "exit","quit"   -> running = false;
-                    default ->{
-                        System.out.println("Unknown command. Type 'help' for list.");
-                    }
+                    default ->  System.out.println("Unknown command. Type 'help' for list.");
                 }
             }catch(Exception e){
                 System.out.println("Unexpected Error "+e.getMessage());
