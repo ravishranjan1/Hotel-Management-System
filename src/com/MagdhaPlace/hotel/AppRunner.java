@@ -19,7 +19,14 @@ public class AppRunner {
 
     public void run(){
         Scanner sc = new Scanner(System.in);
-        System.out.println("Welcome to MagadhPlace Hotel");
+        System.out.println("""
+╔════════════════════════════════════════════╗
+║                                            ║
+║     🏨  WELCOME TO MAGADH PLACE HOTEL      ║
+║                                            ║
+╚════════════════════════════════════════════╝
+""");
+
         printHelp();
         boolean running = true;
         while(running){
